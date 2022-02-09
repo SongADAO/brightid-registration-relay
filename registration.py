@@ -4,7 +4,7 @@ import threading
 import requests
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from config import *
 
 HOST = os.environ['HOST']
@@ -38,6 +38,8 @@ def verify(addr):
 
     # Query user verification status.
     isVerifiedUser = brightid.functions.isVerifiedUser(addr).call()
+
+    isVerifiedUser = False # DEBUG
 
     # Check to see if the user is already verified.
     if isVerifiedUser == True:
@@ -95,17 +97,22 @@ def sponsor(addr):
         app.logger.info('waiting for sponsor operation get applied')
         time.sleep(SPONSOR_CHECK_PERIOD)
 
-        # Check the user's sponsorship status.
+        # Query BrightID verification data
         data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
+        # app.logger.info('Query verification data')
+        # app.logger.info(data)
+
+        # Check the user's sponsorship status.
         if 'errorNum' not in data or data['errorNum'] != NOT_SPONSORED:
             app.logger.info('{} sponsored'.format(addr))
             return
 
     # User never ended up sponsored. Something must have failed.
+    app.logger.info('sponsoring failed')
     raise Exception('sponsoring failed')
 
-def process(addr):
-    app.logger.info('processing {}'.format(addr))
+def check_brightid_link(addr):
+    app.logger.info('sponsoring {}'.format(addr))
 
     addr = Web3.toChecksumAddress(addr)
 
@@ -119,16 +126,25 @@ def process(addr):
         # Check to see if the user has a linked BrightID
         if 'errorNum' not in data or data['errorNum'] != NOT_FOUND:
             app.logger.info('{} is linked'.format(addr))
-            break
+
+            # Verify the wallet id is the one currently linked to the BrightID account
+            contextIds = data.get('data', {}).get('contextIds', [])
+            if contextIds and contextIds[0].lower() != addr.lower():
+                app.logger.info('wallet is not current BrightID link')
+                app.logger.info(contextIds)
+                app.logger.info(addr)
+                raise Exception('This address is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
+
+            return
 
         app.logger.info('{} is NOT linked'.format(addr))
         time.sleep(LINK_CHECK_PERIOD)
     else:
         app.logger.info('{} monitoring expired'.format(addr))
-        return
+        raise Exception('Could not determine that wallet is linked to BrightID')
 
-    # Sponsor user
-    sponsor(addr)
+def check_valid_sponsor(addr):
+    addr = Web3.toChecksumAddress(addr)
 
     # Query BrightID verification data
     # This can be used to check for a valid sponsorship and
@@ -140,24 +156,48 @@ def process(addr):
     # return if user does not have BrightID verification
     # or there are other errors
     if 'errorMessage' in data:
-        app.logger.info(addr)
         app.logger.info(data['errorMessage'])
-        return
+        raise Exception(data['errorMessage'])
 
-    # verify user
+def process(addr):
+    app.logger.info('processing {}'.format(addr))
+
+    addr = Web3.toChecksumAddress(addr)
+
+    # Make sure the address is a current BrightID link
+    check_brightid_link(addr)
+
+    # Sponsor user
+    sponsor(addr)
+
+    # Make sure that the user is still sponsored
+    check_valid_sponsor(addr)
+
+    # Verify user
     verify(addr)
 
-processing = {}
-def _process(addr):
-    if addr in processing:
-        return
-    processing[addr] = True
-    try:
-        process(addr)
-    except:
-        raise
-    finally:
-        del processing[addr]
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "*")
+    response.headers.add('Access-Control-Allow-Methods', "*")
+    return response
+
+def _corsify_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
+# processing = {}
+# def _process(addr):
+#     if addr in processing:
+#         return
+#     processing[addr] = True
+#     try:
+#         process(addr)
+#     except:
+#         raise
+#     finally:
+#         del processing[addr]
 
 app = Flask(__name__)
 
@@ -173,21 +213,20 @@ def test_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.args.get('addr').lower()
     if not addr:
-        return jsonify({'success': False})
+        return jsonify({'success': False, 'error': 'Missing address'})
 
-    # Query BrightID verification data
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-    # app.logger.info('Query verification data')
-    # app.logger.info(data)
-
-    contextIds = data.get('data', {}).get('contextIds', [])
-    if contextIds and contextIds[0] != addr:
-        e = 'This address is used before. Link a new address or use {} as your last linked address!'.format(contextIds[0])
-        return jsonify({'success': False, 'error': e})
-
-    process(addr)
+    try:
+        process(addr)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
     return jsonify({'success': True})
+
+@app.route('/register', methods=['OPTIONS'])
+def register_endpoint_options():
+    app.logger.info('register_endpoint_options')
+
+    return _build_cors_preflight_response()
 
 @app.route('/register', methods=['POST'])
 def register_endpoint():
@@ -196,21 +235,16 @@ def register_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.json and request.json.get('addr', '').lower()
     if not addr:
-        return jsonify({'success': False})
+        return _corsify_actual_response(jsonify({'success': False, 'error': 'Missing address'}))
 
-    # Query BrightID verification data
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-    # app.logger.info('Query verification data')
-    # app.logger.info(data)
+    # threading.Thread(target=_process, args=(addr,)).start()
 
-    contextIds = data.get('data', {}).get('contextIds', [])
-    if contextIds and contextIds[0] != addr:
-        e = 'This address is used before. Link a new address or use {} as your last linked address!'.format(contextIds[0])
-        return jsonify({'success': False, 'error': e})
+    try:
+        process(addr)
+    except Exception as e:
+        return _corsify_actual_response(jsonify({'success': False, 'error': str(e)}))
 
-    threading.Thread(target=_process, args=(addr,)).start()
-
-    return jsonify({'success': True})
+    return _corsify_actual_response(jsonify({'success': True}))
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT)
