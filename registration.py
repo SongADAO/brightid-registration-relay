@@ -219,14 +219,14 @@ def register_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.json and request.json.get('addr', '').lower()
     if not addr:
-        return _corsify_actual_response(jsonify({'success': False, 'error': 'Missing address'}))
+        return _corsify_actual_response(jsonify({'success': False, 'errorMessage': 'Missing address'})), 400
 
     # threading.Thread(target=_process, args=(addr,)).start()
 
     try:
         process(addr)
     except Exception as e:
-        return _corsify_actual_response(jsonify({'success': False, 'error': str(e)}))
+        return _corsify_actual_response(jsonify({'success': False, 'errorMessage': str(e)})), 400
 
     return _corsify_actual_response(jsonify({'success': True}))
 
@@ -237,12 +237,12 @@ def test_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.args.get('addr').lower()
     if not addr:
-        return jsonify({'success': False, 'error': 'Missing address'})
+        return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
 
     try:
         process(addr)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({'success': False, 'errorMessage': str(e)}), 400
 
     return jsonify({'success': True})
 
