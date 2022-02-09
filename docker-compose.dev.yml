@@ -1,8 +1,7 @@
 version: '3.7'
 
 services:
-    songadao-idchain-relay:
-        # image: songadao/idchain-relay:latest
+    songadao-idchain-registration-relay:
         build: .
         env_file:
             - .env
