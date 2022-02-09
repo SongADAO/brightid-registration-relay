@@ -39,7 +39,7 @@ def verify(addr):
     # Query user verification status.
     isVerifiedUser = brightid.functions.isVerifiedUser(addr).call()
 
-    isVerifiedUser = False # DEBUG
+    # isVerifiedUser = False # DEBUG
 
     # Check to see if the user is already verified.
     if isVerifiedUser == True:
@@ -51,8 +51,8 @@ def verify(addr):
     # Get the BrightID data that will be used as
     # input for the verification transaction.
     data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr + '?signed=eth&timestamp=seconds').json()
-    app.logger.info('Query verification signing data')
-    app.logger.info(data)
+    # app.logger.info('Query verification signing data')
+    # app.logger.info(data)
 
     data = data['data']
 
