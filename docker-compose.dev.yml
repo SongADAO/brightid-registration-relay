@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+    songadao-idchain-relay:
+        # image: songadao/idchain-relay:latest
+        build: .
+        env_file:
+            - .env
+        volumes:
+            - .:/app
+        ports:
+            - "5001:5000"
