@@ -201,18 +201,18 @@ def _corsify_actual_response(response):
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/idchain-registration-relay/")
 def index_endpoint():
     app.logger.info('index_endpoint')
     return "running"
 
-@app.route('/register', methods=['OPTIONS'])
+@app.route('/idchain-registration-relay/register', methods=['OPTIONS'])
 def register_endpoint_options():
     app.logger.info('register_endpoint_options')
 
     return _build_cors_preflight_response()
 
-@app.route('/register', methods=['POST'])
+@app.route('/idchain-registration-relay/register', methods=['POST'])
 def register_endpoint():
     app.logger.info('register_endpoint')
 
@@ -230,7 +230,7 @@ def register_endpoint():
 
     return _corsify_actual_response(jsonify({'success': True}))
 
-@app.route('/test', methods=['GET'])
+@app.route('/idchain-registration-relay/test', methods=['GET'])
 def test_endpoint():
     app.logger.info('test_endpoint')
 
