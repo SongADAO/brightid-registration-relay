@@ -206,22 +206,6 @@ def index_endpoint():
     app.logger.info('index_endpoint')
     return "running"
 
-@app.route('/test', methods=['GET'])
-def test_endpoint():
-    app.logger.info('test_endpoint')
-
-    # Check to make sure a wallet address is specified.
-    addr = request.args.get('addr').lower()
-    if not addr:
-        return jsonify({'success': False, 'error': 'Missing address'})
-
-    try:
-        process(addr)
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-    return jsonify({'success': True})
-
 @app.route('/register', methods=['OPTIONS'])
 def register_endpoint_options():
     app.logger.info('register_endpoint_options')
@@ -245,6 +229,22 @@ def register_endpoint():
         return _corsify_actual_response(jsonify({'success': False, 'error': str(e)}))
 
     return _corsify_actual_response(jsonify({'success': True}))
+
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    app.logger.info('test_endpoint')
+
+    # Check to make sure a wallet address is specified.
+    addr = request.args.get('addr').lower()
+    if not addr:
+        return jsonify({'success': False, 'error': 'Missing address'})
+
+    try:
+        process(addr)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT)
