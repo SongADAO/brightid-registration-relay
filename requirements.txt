@@ -1,4 +1,4 @@
 flask
+gunicorn
 requests
-thread6
 web3

@@ -15,4 +15,5 @@ WORKDIR /app
 COPY . .
 
 EXPOSE 5000
-CMD ["python", "registration.py"]
+
+ENTRYPOINT ["./entrypoint.sh"]
