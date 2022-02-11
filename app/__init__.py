@@ -43,7 +43,7 @@ def test_endpoint():
     app.logger.info('test_endpoint')
 
     # Check to make sure a wallet address is specified.
-    addr = request.args.get('addr').lower()
+    addr = request.args.get('addr', '').lower()
     if not addr:
         return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
 
