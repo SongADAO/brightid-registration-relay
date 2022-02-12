@@ -1,7 +1,7 @@
 version: '3.7'
 
 services:
-    songadao-idchain-registration-relay:
+    songadao-brightid-registration-relay:
         build: .
         env_file:
             - .env

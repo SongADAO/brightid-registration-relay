@@ -20,7 +20,7 @@ LINK_CHECK_PERIOD = 10
 SPONSOR_CHECK_NUM = 6
 SPONSOR_CHECK_PERIOD = 10
 
-RELAY_BASE_ROUTE = '/idchain-registration-relay'
+RELAY_BASE_ROUTE = '/brightid-registration-relay'
 
 HOST = os.environ['HOST']
 PORT = os.environ['PORT']

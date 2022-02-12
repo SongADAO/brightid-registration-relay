@@ -5,18 +5,18 @@ x-default-build:
     build: .
 
 services:
-    songadao-idchain-registration-relay-latest:
+    songadao-brightid-registration-relay-latest:
         << : *default-build
-        image: songadao/idchain-registration-relay:latest
+        image: songadao/brightid-registration-relay:latest
 
-    # songadao-idchain-registration-relay-major:
+    # songadao-brightid-registration-relay-major:
     #     << : *default-build
-    #     image: songadao/idchain-registration-relay:0
+    #     image: songadao/brightid-registration-relay:0
 
-    # songadao-idchain-registration-relay-minor:
+    # songadao-brightid-registration-relay-minor:
     #     << : *default-build
-    #     image: songadao/idchain-registration-relay:0.0
+    #     image: songadao/brightid-registration-relay:0.0
 
-    # songadao-idchain-registration-relay-patch:
+    # songadao-brightid-registration-relay-patch:
     #     << : *default-build
-    #     image: songadao/idchain-registration-relay:0.0.1
+    #     image: songadao/brightid-registration-relay:0.0.1
