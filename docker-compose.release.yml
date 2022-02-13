@@ -11,12 +11,12 @@ services:
 
     # songadao-brightid-registration-relay-major:
     #     << : *default-build
-    #     image: songadao/brightid-registration-relay:0
+    #     image: songadao/brightid-registration-relay:1
 
     # songadao-brightid-registration-relay-minor:
     #     << : *default-build
-    #     image: songadao/brightid-registration-relay:0.0
+    #     image: songadao/brightid-registration-relay:1.0
 
     # songadao-brightid-registration-relay-patch:
     #     << : *default-build
-    #     image: songadao/brightid-registration-relay:0.0.1
+    #     image: songadao/brightid-registration-relay:1.0.0
