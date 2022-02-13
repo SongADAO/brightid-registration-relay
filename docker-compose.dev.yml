@@ -9,4 +9,4 @@ services:
             - .:/app
         ports:
             - "5001:5000"
-        entrypoint: /app/entrypoint.dev.sh
+        entrypoint: /app/docker-entrypoint.dev.sh
