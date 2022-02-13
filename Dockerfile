@@ -16,4 +16,4 @@ COPY . .
 
 EXPOSE 5000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
