@@ -6,7 +6,7 @@ from config import *
 
 w3 = Web3(Web3.WebsocketProvider(RPC_URL))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-brightid = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
+contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 def transact(f):
     nonce = w3.eth.getTransactionCount(RELAYER_ADDRESS, 'pending')
@@ -27,7 +27,7 @@ def verify(addr, logger):
     addr = Web3.toChecksumAddress(addr)
 
     # Query user verification status.
-    isVerifiedUser = brightid.functions.isVerifiedUser(addr).call()
+    isVerifiedUser = contract.functions.isVerifiedUser(addr).call()
 
     # isVerifiedUser = False # DEBUG
 
@@ -51,7 +51,7 @@ def verify(addr, logger):
 
     # Run the verification transaction.
     logger.info('verifying {}'.format(addr))
-    transact(brightid.functions.verify(
+    transact(contract.functions.verify(
         data['contextIds'],
         data['timestamp'],
         data['sig']['v'],
@@ -80,7 +80,7 @@ def sponsor(addr, logger):
 
     # Run the sponsorship transaction.
     logger.info('sponsoring {}'.format(addr))
-    transact(brightid.functions.sponsor(addr))
+    transact(contract.functions.sponsor(addr))
 
     # Recheck a users sponsorship status in intervals.
     for i in range(SPONSOR_CHECK_NUM):
