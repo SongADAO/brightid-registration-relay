@@ -102,7 +102,7 @@ def sponsor(addr, logger):
     raise Exception('sponsoring failed')
 
 def check_brightid_link(addr, logger):
-    logger.info('sponsoring {}'.format(addr))
+    logger.info('checking brightid link {}'.format(addr))
 
     addr = Web3.toChecksumAddress(addr)
 
