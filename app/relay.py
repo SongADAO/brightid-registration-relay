@@ -101,45 +101,41 @@ def sponsor(addr, logger):
     logger.info('sponsoring failed')
     raise Exception('sponsoring failed')
 
-def check_brightid_link(addr, logger):
-    logger.info('checking brightid link {}'.format(addr))
-
-    addr = Web3.toChecksumAddress(addr)
+def check_brightid_link(contextId, logger):
+    logger.info('checking brightid link {}'.format(contextId))
 
     # waiting for link
     for i in range(LINK_CHECK_NUM):
         # Query BrightID verification data
-        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
+        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
         # logger.info('Query verification data')
         # logger.info(data)
 
         # Check to see if the user has a linked BrightID
         if 'errorNum' not in data or data['errorNum'] != NOT_FOUND:
-            logger.info('{} is linked'.format(addr))
+            logger.info('{} is linked'.format(contextId))
 
-            # Verify the wallet id is the one currently linked to the BrightID account
+            # Verify the contextId is the one currently linked to the BrightID account
             contextIds = data.get('data', {}).get('contextIds', [])
-            if contextIds and contextIds[0].lower() != addr.lower():
+            if contextIds and contextIds[0].lower() != contextId.lower():
                 logger.info('wallet is not current BrightID link')
                 logger.info(contextIds)
-                logger.info(addr)
-                raise Exception('This address is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
+                logger.info(contextId)
+                raise Exception('This wallet is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
 
             return
 
-        logger.info('{} is NOT linked'.format(addr))
+        logger.info('{} is NOT linked'.format(contextId))
         time.sleep(LINK_CHECK_PERIOD)
     else:
-        logger.info('{} monitoring expired'.format(addr))
+        logger.info('{} monitoring expired'.format(contextId))
         raise Exception('Could not determine that wallet is linked to BrightID')
 
-def check_valid_sponsor(addr, logger):
-    addr = Web3.toChecksumAddress(addr)
-
+def check_valid_sponsor(contextId, logger):
     # Query BrightID verification data
     # This can be used to check for a valid sponsorship and
     # will be used to complete the verification in the next step.
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
+    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
     # logger.info('Query verification data')
     # logger.info(data)
 
