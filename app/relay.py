@@ -6,7 +6,7 @@ from config import *
 
 w3 = Web3(Web3.WebsocketProvider(RPC_URL))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-brightid = w3.eth.contract(address=BRIGHTID_ADDRESS, abi=BRIGHTID_ABI)
+brightid = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 def transact(f):
     nonce = w3.eth.getTransactionCount(RELAYER_ADDRESS, 'pending')
