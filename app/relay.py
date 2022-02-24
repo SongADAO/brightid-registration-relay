@@ -148,8 +148,6 @@ def check_valid_sponsor(contextId, logger):
 def process(addr, logger):
     logger.info('processing {}'.format(addr))
 
-    addr = Web3.toChecksumAddress(addr)
-
     # Make sure the address is a current BrightID link
     check_brightid_link(addr, logger)
 
