@@ -12,8 +12,8 @@ def transact(f):
     nonce = w3.eth.getTransactionCount(RELAYER_ADDRESS, 'pending')
     tx = f.buildTransaction({
         'chainId': CHAINID,
-        'gas': GAS,
-        'gasPrice': GAS_PRICE,
+        'gas': int(GAS),
+        'gasPrice': int(GAS_PRICE),
         'nonce': nonce,
     })
     signed_txn = w3.eth.account.sign_transaction(tx, private_key=RELAYER_PRIVATE)
