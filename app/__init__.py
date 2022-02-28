@@ -18,13 +18,13 @@ def format_error(e):
         app.logger.info('code' in errorJson)
         app.logger.info('message' in errorJson)
 
-        if ('code' in errorJson) and ('message' in errorJson):
+        if (type(e) is dict) and ('code' in errorJson) and ('message' in errorJson):
             return jsonify({'success': False, 'error': {'code': errorJson['code'], 'message': errorJson['message']}})
 
-    if ('code' in e) and ('message' in e):
+    if (type(e) is dict) and ('code' in e) and ('message' in e):
         return jsonify({'success': False, 'error': {'code': e['code'], 'message': e['message']}})
 
-    if ('message' in e):
+    if (type(e) is dict) and ('message' in e):
         return jsonify({'success': False, 'error': {'code': 0, 'message': e['message']}})
 
     return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})
