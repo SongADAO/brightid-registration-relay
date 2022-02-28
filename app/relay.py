@@ -6,14 +6,14 @@ from config import *
 
 w3 = Web3(Web3.WebsocketProvider(RPC_URL))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-brightid = w3.eth.contract(address=BRIGHTID_ADDRESS, abi=BRIGHTID_ABI)
+contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 def transact(f):
     nonce = w3.eth.getTransactionCount(RELAYER_ADDRESS, 'pending')
     tx = f.buildTransaction({
         'chainId': CHAINID,
-        'gas': GAS,
-        'gasPrice': GAS_PRICE,
+        'gas': int(GAS),
+        'gasPrice': int(GAS_PRICE),
         'nonce': nonce,
     })
     signed_txn = w3.eth.account.sign_transaction(tx, private_key=RELAYER_PRIVATE)
@@ -21,13 +21,60 @@ def transact(f):
     receipt = w3.eth.waitForTransactionReceipt(signed_txn['hash'])
     assert receipt['status'], '{} failed'.format(tx)
 
+def toBase32(inputStr):
+    return '0x' + inputStr.encode('utf-8').hex()
+
+def checkBrightIDLink(contextId, logger):
+    logger.info('checking BrightID link {}'.format(contextId))
+
+    # waiting for link
+    for i in range(LINK_CHECK_NUM):
+        # Query BrightID verification data
+        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
+        # logger.info('Query verification data')
+        # logger.info(data)
+
+        # Check to see if the user has a linked BrightID
+        if 'errorNum' not in data or data['errorNum'] != NOT_FOUND:
+            logger.info('{} is linked'.format(contextId))
+
+            # Verify the contextId is the one currently linked to the BrightID account
+            contextIds = data.get('data', {}).get('contextIds', [])
+            if contextIds and contextIds[0].lower() != contextId.lower():
+                logger.info('wallet is not current BrightID link')
+                logger.info(contextIds)
+                logger.info(contextId)
+                raise Exception('This wallet is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
+
+            return
+
+        logger.info('{} is NOT linked'.format(contextId))
+        time.sleep(LINK_CHECK_PERIOD)
+    else:
+        logger.info('{} monitoring expired'.format(contextId))
+        raise Exception('Could not determine that wallet is linked to BrightID')
+
+def checkBrightIDSponsorship(contextId, logger):
+    # Query BrightID verification data
+    # This can be used to check for a valid sponsorship and
+    # will be used to complete the verification in the next step.
+    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
+    # logger.info('Query verification data')
+    # logger.info(data)
+
+    # return if user does not have BrightID verification
+    # or there are other errors
+    if 'errorMessage' in data:
+        logger.info(data['errorMessage'])
+        raise Exception(data['errorMessage'])
+
 def verify(addr, logger):
     logger.info('verifying {}'.format(addr))
 
     addr = Web3.toChecksumAddress(addr)
 
     # Query user verification status.
-    isVerifiedUser = brightid.functions.isVerifiedUser(addr).call()
+    isVerifiedUser = contract.functions.isVerifiedUser(addr).call()
 
     # isVerifiedUser = False # DEBUG
 
@@ -51,7 +98,7 @@ def verify(addr, logger):
 
     # Run the verification transaction.
     logger.info('verifying {}'.format(addr))
-    transact(brightid.functions.verify(
+    transact(contract.functions.verify(
         data['contextIds'],
         data['timestamp'],
         data['sig']['v'],
@@ -80,7 +127,7 @@ def sponsor(addr, logger):
 
     # Run the sponsorship transaction.
     logger.info('sponsoring {}'.format(addr))
-    transact(brightid.functions.sponsor(addr))
+    transact(contract.functions.sponsor(addr))
 
     # Recheck a users sponsorship status in intervals.
     for i in range(SPONSOR_CHECK_NUM):
@@ -101,67 +148,17 @@ def sponsor(addr, logger):
     logger.info('sponsoring failed')
     raise Exception('sponsoring failed')
 
-def check_brightid_link(addr, logger):
-    logger.info('sponsoring {}'.format(addr))
-
-    addr = Web3.toChecksumAddress(addr)
-
-    # waiting for link
-    for i in range(LINK_CHECK_NUM):
-        # Query BrightID verification data
-        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-        # logger.info('Query verification data')
-        # logger.info(data)
-
-        # Check to see if the user has a linked BrightID
-        if 'errorNum' not in data or data['errorNum'] != NOT_FOUND:
-            logger.info('{} is linked'.format(addr))
-
-            # Verify the wallet id is the one currently linked to the BrightID account
-            contextIds = data.get('data', {}).get('contextIds', [])
-            if contextIds and contextIds[0].lower() != addr.lower():
-                logger.info('wallet is not current BrightID link')
-                logger.info(contextIds)
-                logger.info(addr)
-                raise Exception('This address is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
-
-            return
-
-        logger.info('{} is NOT linked'.format(addr))
-        time.sleep(LINK_CHECK_PERIOD)
-    else:
-        logger.info('{} monitoring expired'.format(addr))
-        raise Exception('Could not determine that wallet is linked to BrightID')
-
-def check_valid_sponsor(addr, logger):
-    addr = Web3.toChecksumAddress(addr)
-
-    # Query BrightID verification data
-    # This can be used to check for a valid sponsorship and
-    # will be used to complete the verification in the next step.
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-    # logger.info('Query verification data')
-    # logger.info(data)
-
-    # return if user does not have BrightID verification
-    # or there are other errors
-    if 'errorMessage' in data:
-        logger.info(data['errorMessage'])
-        raise Exception(data['errorMessage'])
-
 def process(addr, logger):
     logger.info('processing {}'.format(addr))
 
-    addr = Web3.toChecksumAddress(addr)
-
     # Make sure the address is a current BrightID link
-    check_brightid_link(addr, logger)
+    checkBrightIDLink(addr, logger)
 
     # Sponsor user
     sponsor(addr, logger)
 
     # Make sure that the user is still sponsored
-    check_valid_sponsor(addr, logger)
+    checkBrightIDSponsorship(addr, logger)
 
     # Verify user
     verify(addr, logger)
