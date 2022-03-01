@@ -8,26 +8,26 @@ from relay import *
 app = Flask(__name__)
 
 def format_error(e):
-    if ("'code'" in str(e)) & ("'message'" in str(e)):
-        errorJsonStr = str(e).replace("'", '"')
-        errorJson = json.loads(errorJsonStr)
+    errorCode = 0
+    errorMessage = str(e)
 
-        app.logger.info(errorJson['code'])
-        app.logger.info(errorJson['message'])
-        app.logger.info(errorJson)
-        app.logger.info('code' in errorJson)
-        app.logger.info('message' in errorJson)
+    app.logger.info(str(e))
 
-        if (type(e) is dict) and ('code' in errorJson) and ('message' in errorJson):
-            return jsonify({'success': False, 'error': {'code': errorJson['code'], 'message': errorJson['message']}})
+    try:
+        e = ast.literal_eval(str(e))
+    except Exception:
+        pass
 
-    if (type(e) is dict) and ('code' in e) and ('message' in e):
-        return jsonify({'success': False, 'error': {'code': e['code'], 'message': e['message']}})
+    if (type(e) is dict) and ('code' in e):
+        errorCode = e['code']
 
     if (type(e) is dict) and ('message' in e):
-        return jsonify({'success': False, 'error': {'code': 0, 'message': e['message']}})
+        errorMessage = e['message']
 
-    return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})
+    return jsonify({
+        'success': False,
+        'error': {'code': errorCode, 'message': errorMessage},
+    })
 
 def format_success():
     return jsonify({'success': True})
