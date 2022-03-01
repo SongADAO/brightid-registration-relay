@@ -52,7 +52,7 @@ def checkBrightIDLink(contextId, logger):
         time.sleep(LINK_CHECK_PERIOD)
     else:
         logger.info('{} monitoring expired'.format(contextId))
-        raise Exception('Could not determine that wallet is linked to BrightID')
+        raise Exception('Could not determine that wallet is linked to BrightID.')
 
 def checkBrightIDSponsorship(contextId, logger):
     # Query BrightID verification data
@@ -146,7 +146,7 @@ def sponsor(addr, logger):
 
     # User never ended up sponsored. Something must have failed.
     logger.info('sponsoring failed')
-    raise Exception('sponsoring failed')
+    raise Exception('Sponsoring failed.')
 
 def process(addr, logger):
     logger.info('processing {}'.format(addr))
