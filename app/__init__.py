@@ -1,4 +1,4 @@
-import json
+import ast
 from flask import Flask, request, jsonify
 
 from config import *
