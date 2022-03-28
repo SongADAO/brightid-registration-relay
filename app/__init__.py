@@ -1,4 +1,4 @@
-import json
+import ast
 from flask import Flask, request, jsonify
 
 from config import *
@@ -23,6 +23,9 @@ def format_error(e):
 
     if (type(e) is dict) and ('message' in e):
         errorMessage = e['message']
+
+    app.logger.info(errorCode)
+    app.logger.info(errorMessage)
 
     return jsonify({
         'success': False,
