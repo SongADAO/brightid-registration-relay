@@ -19,4 +19,4 @@ services:
 
     # songadao-brightid-registration-relay-patch:
     #     << : *default-build
-    #     image: songadao/brightid-registration-relay:1.0.4
+    #     image: songadao/brightid-registration-relay:1.0.5
